@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Goal Hierarchy</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    svg {
+      width: 100vw;
+      height: 100vh;
+      background-color: #f0f0f0;
+    }
+    .node rect {
+      fill: #fff;
+      stroke: #666;
+      stroke-width: 1.5px;
+      rx: 10px;
+      ry: 10px;
+    }
+    .node text {
+      font: 12px sans-serif;
+      pointer-events: none;
+    }
+    .link {
+      fill: none;
+      stroke: #ccc;
+      stroke-width: 1.5px;
+    }
+    .input-overlay {
+      position: absolute;
+      border: 1px solid #ccc;
+      padding: 4px;
+      font-size: 12px;
+      background-color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <svg></svg>
+  <!-- Include D3.js library -->
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <script>
+    const svg = d3.select("svg");
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const g = svg.append("g").attr("transform", "translate(0,40)");
+
+    let treeData = [];
+    let nodeId = 0;
+
+    const treeLayout = d3.tree().size([width, height - 160]);
+
+    // Function to create a new node
+    function createNode(parentData, pageX, pageY) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "input-overlay";
+      input.style.left = pageX + "px";
+      input.style.top = pageY + "px";
+      document.body.appendChild(input);
+      input.focus();
+
+      input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+          const text = input.value.trim();
+          if (text !== "") {
+            const newNode = {
+              name: text,
+              id: ++nodeId,
+              children: []
+            };
+            if (parentData === null) {
+              treeData.push(newNode);
+            } else {
+              if (!parentData.children) parentData.children = [];
+              parentData.children.push(newNode);
+            }
+            update();
+          }
+          document.body.removeChild(input);
+        }
+      });
+    }
+
+    // Function to edit an existing node's text
+    function editNode(nodeData, pageX, pageY) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "input-overlay";
+      input.style.left = pageX + "px";
+      input.style.top = pageY + "px";
+      input.value = nodeData.name;
+      document.body.appendChild(input);
+      input.focus();
+
+      input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+          const text = input.value.trim();
+          if (text !== "") {
+            nodeData.name = text;
+            update();
+          }
+          document.body.removeChild(input);
+        }
+      });
+    }
+
+    // Function to update the tree layout
+    function update() {
+      if (treeData.length === 0) return;
+
+      let root;
+      if (treeData.length === 1) {
+        // If only one top-level goal, set root to that goal
+        root = d3.hierarchy(treeData[0]);
+      } else {
+        // If multiple top-level goals, create a synthetic root
+        root = d3.hierarchy({ children: treeData });
+      }
+
+      treeLayout(root);
+
+      // Exclude the synthetic root node from rendering
+      const nodes = root.descendants().filter(d => d.depth > (treeData.length === 1 ? -1 : 0));
+      const links = root.links().filter(d => d.source.depth > 0 || treeData.length === 1);
+
+      // Normalize for fixed-depth.
+      nodes.forEach(function(d){ d.y = d.depth * 100; });
+
+      // Center the tree if only one node
+      if (nodes.length === 1) {
+        nodes[0].x = width / 2;
+      }
+
+      // **************** Nodes section ***************************
+
+      // Update the nodes...
+      const node = g.selectAll('g.node')
+        .data(nodes, function(d) { return d.data.id; });
+
+      // Enter any new nodes
+      const nodeEnter = node.enter().append('g')
+        .attr('class', 'node')
+        .attr("transform", function(d) {
+          return "translate(" + d.x + "," + d.y + ")";
+        })
+        .on("click", function(event, d) {
+          event.stopPropagation();
+          createNode(d.data, event.pageX, event.pageY);
+        })
+        .on("contextmenu", function(event, d) {
+          event.preventDefault();
+          event.stopPropagation();
+          editNode(d.data, event.pageX, event.pageY);
+        });
+
+      // Add rectangles
+      nodeEnter.append('rect')
+        .attr('width', function(d) {
+          return Math.max(100, d.data.name.length * 7 + 20);
+        })
+        .attr('height', 40)
+        .attr('x', function(d) {
+          return -((Math.max(100, d.data.name.length * 7 + 20)) / 2);
+        })
+        .attr('y', -20)
+        .attr('rx', 10)
+        .attr('ry', 10);
+
+      // Add labels
+      nodeEnter.append('text')
+        .attr("dy", 5)
+        .attr("text-anchor", "middle")
+        .text(function(d) { return d.data.name; });
+
+      // UPDATE
+      const nodeUpdate = nodeEnter.merge(node);
+
+      // Transition to the proper position for the node
+      nodeUpdate.transition()
+        .attr("transform", function(d) {
+          return "translate(" + d.x + "," + d.y + ")";
+        });
+
+      // Update rectangles width if text has changed
+      nodeUpdate.select('rect')
+        .attr('width', function(d) {
+          return Math.max(100, d.data.name.length * 7 + 20);
+        })
+        .attr('x', function(d) {
+          return -((Math.max(100, d.data.name.length * 7 + 20)) / 2);
+        });
+
+      // Update text
+      nodeUpdate.select('text')
+        .text(function(d) { return d.data.name; });
+
+      // Remove any exiting nodes
+      node.exit().remove();
+
+      // **************** Links section ***************************
+
+      // Update the links...
+      const link = g.selectAll('path.link')
+        .data(links, function(d) { return d.target.data.id; });
+
+      // Enter any new links
+      const linkEnter = link.enter().insert('path', "g")
+        .attr("class", "link")
+        .attr('d', function(d){
+          var o = {x: d.source.x, y: d.source.y};
+          return elbow(o, o);
+        });
+
+      // UPDATE
+      const linkUpdate = linkEnter.merge(link);
+
+      // Transition back to the parent element position
+      linkUpdate.transition()
+        .attr('d', function(d){ return diagonal(d.source, d.target); });
+
+      // Remove any exiting links
+      link.exit().remove();
+
+      // Creates a smooth curved path from parent to the child nodes
+      function diagonal(s, d) {
+        const path = `M ${s.x} ${s.y + 20}
+                      C ${s.x} ${(s.y + d.y) / 2},
+                        ${d.x} ${(s.y + d.y) / 2},
+                        ${d.x} ${d.y - 20}`;
+        return path;
+      }
+
+      // For initial link animation
+      function elbow(s, d) {
+        return `M ${s.x} ${s.y}
+                L ${s.x} ${s.y}
+                L ${s.x} ${s.y}`;
+      }
+    }
+
+    // Event listener for clicking on the SVG
+    svg.on("click", function(event) {
+      createNode(null, event.pageX, event.pageY);
+    });
+
+  </script>
+</body>
+</html>
