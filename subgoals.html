@@ -1,253 +1,332 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Goal Hierarchy</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-    }
-    svg {
-      width: 100vw;
-      height: 100vh;
-      background-color: #f0f0f0;
-    }
-    .node rect {
-      fill: #fff;
-      stroke: #666;
-      stroke-width: 1.5px;
-      rx: 10px;
-      ry: 10px;
-    }
-    .node text {
-      font: 12px sans-serif;
-      pointer-events: none;
-    }
-    .link {
-      fill: none;
-      stroke: #ccc;
-      stroke-width: 1.5px;
-    }
-    .input-overlay {
-      position: absolute;
-      border: 1px solid #ccc;
-      padding: 4px;
-      font-size: 12px;
-      background-color: #fff;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Centered Goal Hierarchy Maker</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    height: 100%;
+    width: 100%;
+    background: #f0f0f0;
+    font-family: sans-serif;
+  }
+  #appContainer {
+    position: relative;
+    margin: 0 auto;
+    width: 100%;
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 20px;
+  }
+  #connections {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .goal-bubble {
+    position: absolute;
+    background: #fff;
+    border: 2px solid #888;
+    border-radius: 8px;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    padding: 6px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-block;
+    text-align: center;
+  }
+  .goal-input {
+    position: absolute;
+    border: 2px solid #888;
+    border-radius: 4px;
+    padding: 4px;
+    outline: none;
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+  }
+  .dragging {
+    opacity: 0.7;
+    z-index: 999;
+  }
+</style>
 </head>
 <body>
-  <svg></svg>
-  <!-- Include D3.js library -->
-  <script src="https://d3js.org/d3.v6.min.js"></script>
-  <script>
-    const svg = d3.select("svg");
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+<div id="appContainer">
+  <svg id="connections"></svg>
+</div>
 
-    const g = svg.append("g").attr("transform", "translate(0,40)");
-
-    let treeData = [];
-    let nodeId = 0;
-
-    const treeLayout = d3.tree().size([width, height - 160]);
-
-    // Function to create a new node
-    function createNode(parentData, pageX, pageY) {
-      const input = document.createElement("input");
-      input.type = "text";
-      input.className = "input-overlay";
-      input.style.left = pageX + "px";
-      input.style.top = pageY + "px";
-      document.body.appendChild(input);
-      input.focus();
-
-      input.addEventListener("keydown", function(e) {
-        if (e.key === "Enter") {
-          const text = input.value.trim();
-          if (text !== "") {
-            const newNode = {
-              name: text,
-              id: ++nodeId,
-              children: []
-            };
-            if (parentData === null) {
-              treeData.push(newNode);
-            } else {
-              if (!parentData.children) parentData.children = [];
-              parentData.children.push(newNode);
-            }
-            update();
-          }
-          document.body.removeChild(input);
-        }
-      });
-    }
-
-    // Function to edit an existing node's text
-    function editNode(nodeData, pageX, pageY) {
-      const input = document.createElement("input");
-      input.type = "text";
-      input.className = "input-overlay";
-      input.style.left = pageX + "px";
-      input.style.top = pageY + "px";
-      input.value = nodeData.name;
-      document.body.appendChild(input);
-      input.focus();
-
-      input.addEventListener("keydown", function(e) {
-        if (e.key === "Enter") {
-          const text = input.value.trim();
-          if (text !== "") {
-            nodeData.name = text;
-            update();
-          }
-          document.body.removeChild(input);
-        }
-      });
-    }
-
-    // Function to update the tree layout
-    function update() {
-      if (treeData.length === 0) return;
-
-      let root;
-      if (treeData.length === 1) {
-        // If only one top-level goal, set root to that goal
-        root = d3.hierarchy(treeData[0]);
+<script>
+let goals = [];
+let topLevelGoalId = null;
+let draggingGoalId = null;
+let dragStartX = 0;
+let originalX = 0;
+let isDragging = false;
+let newGoalMode = false;
+const container = document.getElementById('appContainer');
+const svg = document.getElementById('connections');
+initTopLevelGoal();
+recalcAndRender();
+function initTopLevelGoal() {
+  const id = generateId();
+  const newGoal = {
+    id,
+    text: "Main",
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    parentId: null,
+    children: []
+  };
+  goals.push(newGoal);
+  topLevelGoalId = id;
+}
+function generateId() {
+  return 'goal-' + Math.random().toString(36).substr(2,9);
+}
+container.addEventListener('click', onContainerClick);
+container.addEventListener('contextmenu', onContainerRightClick);
+document.addEventListener('mousemove', onMouseMove);
+document.addEventListener('mouseup', onMouseUp);
+function onContainerClick(e) {
+  if (isDragging || newGoalMode) return;
+  const target = e.target;
+  if (target.classList.contains('goal-bubble') || target.classList.contains('goal-input')) {
+    createSubGoal(target.dataset.id, e.clientX, e.clientY);
+  }
+}
+function onContainerRightClick(e) {
+  e.preventDefault();
+  const target = e.target;
+  if (target.classList.contains('goal-bubble')) {
+    editGoalText(target.dataset.id);
+  }
+}
+function createSubGoal(parentId, x, y) {
+  const parent = goals.find(g => g.id === parentId);
+  if (!parent) return;
+  const id = generateId();
+  const newGoal = {
+    id: id,
+    text: "",
+    x: x,
+    y: y,
+    width: 0,
+    height: 0,
+    parentId: parentId,
+    children: []
+  };
+  goals.push(newGoal);
+  parent.children.push(id);
+  renderInputBox(newGoal, x, y);
+}
+function renderInputBox(goal, x, y) {
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'goal-input';
+  input.style.left = (x - 50) + 'px';
+  input.style.top = (y - 15) + 'px';
+  input.value = goal.text || "";
+  container.appendChild(input);
+  input.focus();
+  newGoalMode = true;
+  const onEnter = (ev) => {
+    if (ev.key === "Enter") {
+      const val = input.value.trim();
+      container.removeChild(input);
+      if (val === "") {
+        deleteGoalAndSubtree(goal.id);
       } else {
-        // If multiple top-level goals, create a synthetic root
-        root = d3.hierarchy({ children: treeData });
+        goal.text = val;
+        createGoalBubble(goal);
       }
-
-      treeLayout(root);
-
-      // Exclude the synthetic root node from rendering
-      const nodes = root.descendants().filter(d => d.depth > (treeData.length === 1 ? -1 : 0));
-      const links = root.links().filter(d => d.source.depth > 0 || treeData.length === 1);
-
-      // Normalize for fixed-depth.
-      nodes.forEach(function(d){ d.y = d.depth * 100; });
-
-      // Center the tree if only one node
-      if (nodes.length === 1) {
-        nodes[0].x = width / 2;
-      }
-
-      // **************** Nodes section ***************************
-
-      // Update the nodes...
-      const node = g.selectAll('g.node')
-        .data(nodes, function(d) { return d.data.id; });
-
-      // Enter any new nodes
-      const nodeEnter = node.enter().append('g')
-        .attr('class', 'node')
-        .attr("transform", function(d) {
-          return "translate(" + d.x + "," + d.y + ")";
-        })
-        .on("click", function(event, d) {
-          event.stopPropagation();
-          createNode(d.data, event.pageX, event.pageY);
-        })
-        .on("contextmenu", function(event, d) {
-          event.preventDefault();
-          event.stopPropagation();
-          editNode(d.data, event.pageX, event.pageY);
-        });
-
-      // Add rectangles
-      nodeEnter.append('rect')
-        .attr('width', function(d) {
-          return Math.max(100, d.data.name.length * 7 + 20);
-        })
-        .attr('height', 40)
-        .attr('x', function(d) {
-          return -((Math.max(100, d.data.name.length * 7 + 20)) / 2);
-        })
-        .attr('y', -20)
-        .attr('rx', 10)
-        .attr('ry', 10);
-
-      // Add labels
-      nodeEnter.append('text')
-        .attr("dy", 5)
-        .attr("text-anchor", "middle")
-        .text(function(d) { return d.data.name; });
-
-      // UPDATE
-      const nodeUpdate = nodeEnter.merge(node);
-
-      // Transition to the proper position for the node
-      nodeUpdate.transition()
-        .attr("transform", function(d) {
-          return "translate(" + d.x + "," + d.y + ")";
-        });
-
-      // Update rectangles width if text has changed
-      nodeUpdate.select('rect')
-        .attr('width', function(d) {
-          return Math.max(100, d.data.name.length * 7 + 20);
-        })
-        .attr('x', function(d) {
-          return -((Math.max(100, d.data.name.length * 7 + 20)) / 2);
-        });
-
-      // Update text
-      nodeUpdate.select('text')
-        .text(function(d) { return d.data.name; });
-
-      // Remove any exiting nodes
-      node.exit().remove();
-
-      // **************** Links section ***************************
-
-      // Update the links...
-      const link = g.selectAll('path.link')
-        .data(links, function(d) { return d.target.data.id; });
-
-      // Enter any new links
-      const linkEnter = link.enter().insert('path', "g")
-        .attr("class", "link")
-        .attr('d', function(d){
-          var o = {x: d.source.x, y: d.source.y};
-          return elbow(o, o);
-        });
-
-      // UPDATE
-      const linkUpdate = linkEnter.merge(link);
-
-      // Transition back to the parent element position
-      linkUpdate.transition()
-        .attr('d', function(d){ return diagonal(d.source, d.target); });
-
-      // Remove any exiting links
-      link.exit().remove();
-
-      // Creates a smooth curved path from parent to the child nodes
-      function diagonal(s, d) {
-        const path = `M ${s.x} ${s.y + 20}
-                      C ${s.x} ${(s.y + d.y) / 2},
-                        ${d.x} ${(s.y + d.y) / 2},
-                        ${d.x} ${d.y - 20}`;
-        return path;
-      }
-
-      // For initial link animation
-      function elbow(s, d) {
-        return `M ${s.x} ${s.y}
-                L ${s.x} ${s.y}
-                L ${s.x} ${s.y}`;
+      newGoalMode = false;
+      recalcAndRender();
+      input.removeEventListener('keydown', onEnter);
+    }
+  };
+  input.addEventListener('keydown', onEnter);
+}
+function editGoalText(goalId) {
+  const goal = goals.find(g => g.id === goalId);
+  if (!goal) return;
+  const bubbleEl = document.querySelector(`.goal-bubble[data-id="${goalId}"]`);
+  if (bubbleEl) container.removeChild(bubbleEl);
+  renderInputBox(goal, goal.x + goal.width/2, goal.y + goal.height/2);
+}
+function createGoalBubble(goal) {
+  const old = document.querySelector(`.goal-bubble[data-id="${goal.id}"]`);
+  if (old) container.removeChild(old);
+  const div = document.createElement('div');
+  div.className = 'goal-bubble';
+  div.dataset.id = goal.id;
+  div.innerText = goal.text;
+  container.appendChild(div);
+  div.style.left = goal.x + 'px';
+  div.style.top = goal.y + 'px';
+  goal.width = div.offsetWidth;
+  goal.height = div.offsetHeight;
+  if (goal.parentId) {
+    div.addEventListener('mousedown', (e) => {
+      isDragging = false;
+      draggingGoalId = goal.id;
+      dragStartX = e.clientX;
+      originalX = goal.x;
+    });
+  }
+}
+function deleteGoalAndSubtree(goalId) {
+  const allIds = gatherSubtreeIds(goalId);
+  goals = goals.filter(g => !allIds.includes(g.id));
+  goals.forEach(g => {
+    g.children = g.children.filter(c => !allIds.includes(c));
+  });
+  if (allIds.includes(topLevelGoalId)) {
+    goals = [];
+    initTopLevelGoal();
+  }
+}
+function gatherSubtreeIds(rootId) {
+  const result = [rootId];
+  const queue = [rootId];
+  while (queue.length) {
+    const current = queue.shift();
+    const goal = goals.find(g => g.id === current);
+    if (goal) {
+      for (let c of goal.children) {
+        result.push(c);
+        queue.push(c);
       }
     }
-
-    // Event listener for clicking on the SVG
-    svg.on("click", function(event) {
-      createNode(null, event.pageX, event.pageY);
+  }
+  return result;
+}
+function recalcAndRender() {
+  document.querySelectorAll('.goal-bubble').forEach(b => container.removeChild(b));
+  while (svg.firstChild) {
+    svg.removeChild(svg.firstChild);
+  }
+  goals.forEach(g => createGoalBubble(g));
+  const topGoal = goals.find(g => g.id === topLevelGoalId);
+  if (!topGoal) return;
+  measureSubtreeSize(topGoal);
+  const containerWidth = container.offsetWidth || window.innerWidth;
+  const centerX = containerWidth / 2;
+  layoutSubtree(topGoal, centerX, 50);
+  goals.forEach(g => {
+    const el = document.querySelector(`.goal-bubble[data-id="${g.id}"]`);
+    if (!el) return;
+    el.style.left = g.x + 'px';
+    el.style.top = g.y + 'px';
+    g.width = el.offsetWidth;
+    g.height = el.offsetHeight;
+  });
+  goals.forEach(parent => {
+    parent.children.forEach(childId => {
+      const child = goals.find(g => g.id === childId);
+      drawLine(parent, child);
     });
-
-  </script>
+  });
+}
+function measureSubtreeSize(node) {
+  if (!node.children || node.children.length === 0) {
+    node.subtreeWidth = node.width;
+    node.subtreeHeight = node.height;
+    return;
+  }
+  let childrenTotalWidth = 0;
+  let maxChildHeight = 0;
+  node.children.forEach(cid => {
+    const child = goals.find(g => g.id === cid);
+    measureSubtreeSize(child);
+    childrenTotalWidth += child.subtreeWidth;
+    maxChildHeight = Math.max(maxChildHeight, child.subtreeHeight);
+  });
+  const spacing = 40 * (node.children.length - 1);
+  childrenTotalWidth += spacing;
+  node.subtreeWidth = Math.max(node.width, childrenTotalWidth);
+  node.subtreeHeight = node.height + 60 + maxChildHeight;
+}
+function layoutSubtree(node, centerX, topY) {
+  node.x = centerX - (node.width / 2);
+  node.y = topY;
+  if (!node.children || node.children.length === 0) {
+    return;
+  }
+  let childrenTotalWidth = 0;
+  node.children.forEach(cid => {
+    const c = goals.find(g => g.id === cid);
+    childrenTotalWidth += c.subtreeWidth;
+  });
+  const spacing = 40 * (node.children.length - 1);
+  childrenTotalWidth += spacing;
+  let childLeft = centerX - (childrenTotalWidth / 2);
+  node.children.forEach(cid => {
+    const child = goals.find(g => g.id === cid);
+    const childCenterX = childLeft + (child.subtreeWidth / 2);
+    const childTopY = topY + node.height + 60;
+    layoutSubtree(child, childCenterX, childTopY);
+    childLeft += child.subtreeWidth + 40;
+  });
+}
+function drawLine(parent, child) {
+  const line = document.createElementNS("http://www.w3.org/2000/svg", 'line');
+  line.setAttribute('x1', parent.x + parent.width / 2);
+  line.setAttribute('y1', parent.y + parent.height);
+  line.setAttribute('x2', child.x + child.width / 2);
+  line.setAttribute('y2', child.y);
+  line.setAttribute('stroke', '#444');
+  line.setAttribute('stroke-width', '2');
+  svg.appendChild(line);
+}
+function onMouseMove(e) {
+  if (!draggingGoalId) return;
+  const goal = goals.find(g => g.id === draggingGoalId);
+  if (!goal) return;
+  if (Math.abs(e.clientX - dragStartX) > 3) {
+    isDragging = true;
+  }
+  if (isDragging) {
+    const el = document.querySelector(`.goal-bubble[data-id="${goal.id}"]`);
+    if (el) {
+      el.classList.add('dragging');
+      const dx = e.clientX - dragStartX;
+      goal.x = originalX + dx;
+      el.style.left = goal.x + 'px';
+    }
+  }
+}
+function onMouseUp(e) {
+  if (!draggingGoalId) {
+    isDragging = false;
+    return;
+  }
+  const goal = goals.find(g => g.id === draggingGoalId);
+  if (!goal) return;
+  const el = document.querySelector(`.goal-bubble[data-id="${goal.id}"]`);
+  if (el) el.classList.remove('dragging');
+  if (isDragging) {
+    reorderAmongSiblings(goal);
+    recalcAndRender();
+  }
+  draggingGoalId = null;
+  isDragging = false;
+}
+function reorderAmongSiblings(goal) {
+  const parent = goals.find(g => g.id === goal.parentId);
+  if (!parent) return;
+  parent.children.sort((aId, bId) => {
+    const ga = goals.find(g => g.id === aId);
+    const gb = goals.find(g => g.id === bId);
+    return ga.x - gb.x;
+  });
+}
+</script>
 </body>
 </html>
