@@ -37,7 +37,7 @@
     box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
     padding: 6px 10px;
     cursor: pointer;
-    white-space: nowrap;
+    white-space: pre-line;
     display: inline-block;
     text-align: center;
   }
@@ -48,6 +48,8 @@
     padding: 4px;
     outline: none;
     box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    resize: none;
+    width: 100px;
   }
   .dragging {
     opacity: 0.7;
@@ -127,17 +129,18 @@ function createSubGoal(parentId, x, y) {
   renderInputBox(newGoal, x, y);
 }
 function renderInputBox(goal, x, y) {
-  const input = document.createElement('input');
-  input.type = 'text';
+  const input = document.createElement('textarea');
   input.className = 'goal-input';
+  input.rows = 2;
   input.style.left = (x - 50) + 'px';
-  input.style.top = (y - 15) + 'px';
+  input.style.top = (y - 20) + 'px';
   input.value = goal.text || "";
   container.appendChild(input);
   input.focus();
   newGoalMode = true;
   const onEnter = (ev) => {
-    if (ev.key === "Enter") {
+    if (ev.key === "Enter" && !ev.shiftKey) {
+      ev.preventDefault();
       const val = input.value.trim();
       container.removeChild(input);
       if (val === "") {
