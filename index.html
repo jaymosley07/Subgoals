@@ -18,25 +18,26 @@
     top: 0;
     left: 0;
     width: 100%;
-    background: #2c3e50;
+    background: #fff;
     padding: 10px;
     box-sizing: border-box;
     display: flex;
     gap: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     z-index: 1000;
   }
   #menuBar button {
-    background: #fff;
+    background: #3498db;
+    color: #fff;
     border: none;
-    padding: 8px 14px;
+    padding: 8px 16px;
     border-radius: 4px;
     font-size: 14px;
     cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
   }
   #menuBar button:hover {
-    background: #f0f0f0;
+    background: #2980b9;
   }
   #menuBar input[type="file"] {
     display: none;
@@ -47,7 +48,7 @@
     width: 100%;
     min-height: 100vh;
     box-sizing: border-box;
-    padding: 60px 20px 20px;
+    padding: 80px 20px 20px;
   }
   #connections {
     position: absolute;
@@ -387,11 +388,17 @@ function saveGoals() {
       children: [...g.children]
     }))
   };
+  const topGoal = goals.find(g => g.id === topLevelGoalId);
+  let name = 'Goals';
+  if (topGoal && topGoal.text && topGoal.text.trim() && topGoal.text.trim() !== 'Main') {
+    name = topGoal.text.trim();
+  }
+  name = name.replace(/\s+/g, '_').replace(/[^a-z0-9_\-]/gi, '');
   const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'subgoals.json';
+  a.download = `${name}_subgoals.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
