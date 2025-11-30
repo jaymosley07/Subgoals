@@ -13,6 +13,26 @@
     background: #f0f0f0;
     font-family: sans-serif;
   }
+  #controls {
+    position: sticky;
+    top: 0;
+    display: flex;
+    gap: 10px;
+    padding: 12px 20px 0 20px;
+    background: linear-gradient(to bottom, #f0f0f0 70%, rgba(240,240,240,0));
+    z-index: 10;
+  }
+  #controls button {
+    padding: 8px 12px;
+    border: 1px solid #888;
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+  }
+  #controls button:hover {
+    background: #fafafa;
+  }
   #appContainer {
     position: relative;
     margin: 0 auto;
@@ -58,6 +78,11 @@
 </style>
 </head>
 <body>
+<div id="controls">
+  <button id="saveGoalsBtn">Save Goals</button>
+  <input type="file" id="loadGoalsInput" accept="application/json" style="display:none" />
+  <button id="loadGoalsBtn">Load Goals</button>
+</div>
 <div id="appContainer">
   <svg id="connections"></svg>
 </div>
@@ -72,8 +97,14 @@ let isDragging = false;
 let newGoalMode = false;
 const container = document.getElementById('appContainer');
 const svg = document.getElementById('connections');
+const saveBtn = document.getElementById('saveGoalsBtn');
+const loadBtn = document.getElementById('loadGoalsBtn');
+const loadInput = document.getElementById('loadGoalsInput');
 initTopLevelGoal();
 recalcAndRender();
+saveBtn.addEventListener('click', saveGoalsToFile);
+loadBtn.addEventListener('click', () => loadInput.click());
+loadInput.addEventListener('change', handleLoadInputChange);
 function initTopLevelGoal() {
   const id = generateId();
   const newGoal = {
@@ -329,6 +360,64 @@ function reorderAmongSiblings(goal) {
     const gb = goals.find(g => g.id === bId);
     return ga.x - gb.x;
   });
+}
+function serializeGoals() {
+  return {
+    topLevelGoalId,
+    goals
+  };
+}
+function saveGoalsToFile() {
+  const data = serializeGoals();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  const mainGoal = goals.find(g => g.id === topLevelGoalId);
+  const mainGoalName = (mainGoal && mainGoal.text ? mainGoal.text : 'Main').trim();
+  const safeMainGoalName = mainGoalName.replace(/[^a-z0-9_-]+/gi, ' ').trim().replace(/\s+/g, '_') || 'Main';
+  link.download = `Goals_${safeMainGoalName}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+function handleLoadInputChange(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || !Array.isArray(data.goals)) {
+        throw new Error('Invalid goals data');
+      }
+      if (!data.topLevelGoalId) {
+        throw new Error('Missing top level goal id');
+      }
+      const loadedGoals = data.goals.map(g => ({
+        id: g.id,
+        text: g.text || '',
+        x: typeof g.x === 'number' ? g.x : 0,
+        y: typeof g.y === 'number' ? g.y : 0,
+        width: typeof g.width === 'number' ? g.width : 0,
+        height: typeof g.height === 'number' ? g.height : 0,
+        parentId: g.parentId || null,
+        children: Array.isArray(g.children) ? g.children : []
+      }));
+      if (!loadedGoals.find(g => g.id === data.topLevelGoalId)) {
+        throw new Error('Top level goal not found in data');
+      }
+      goals = loadedGoals;
+      topLevelGoalId = data.topLevelGoalId;
+      recalcAndRender();
+    } catch (err) {
+      alert('Failed to load goals: ' + err.message);
+    } finally {
+      loadInput.value = '';
+    }
+  };
+  reader.readAsText(file);
 }
 </script>
 </body>
