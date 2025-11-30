@@ -373,7 +373,10 @@ function saveGoalsToFile() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'goals.json';
+  const mainGoal = goals.find(g => g.id === topLevelGoalId);
+  const mainGoalName = (mainGoal && mainGoal.text ? mainGoal.text : 'Main').trim();
+  const safeMainGoalName = mainGoalName.replace(/[^a-z0-9_-]+/gi, ' ').trim().replace(/\s+/g, '_') || 'Main';
+  link.download = `Goals_${safeMainGoalName}.json`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
