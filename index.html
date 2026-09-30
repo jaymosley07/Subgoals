@@ -5,7 +5,7 @@
     <meta name="description" content="A free offline visual goal planner. No account, installation, server, or internet required.">
     <meta name="theme-color" content="#f7f8f5">
     <meta name="referrer" content="no-referrer">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-sAuYXzMr2jo5b21McyqI3N0+r1iW0ay8SDoCzzC3K5E=' 'sha256-aTUitgHM3964V6JBXz44PwAEEzxglBBZxBoyDt8XiK4=' 'sha256-mzbWbhd7aYxMhSZKyOzvj+Xu0iO53iA67QaY3Sx1hB8=' 'sha256-zFQSSAlKE48Ed8ub4ZYQt9CQC7WOqyVbfP0Sm9PjrPM=' 'sha256-7odlgT1tznbj2JgT2FT/1sTbBZB5BLUNDiBz1zvRNZo='; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-sAuYXzMr2jo5b21McyqI3N0+r1iW0ay8SDoCzzC3K5E=' 'sha256-aTUitgHM3964V6JBXz44PwAEEzxglBBZxBoyDt8XiK4=' 'sha256-mzbWbhd7aYxMhSZKyOzvj+Xu0iO53iA67QaY3Sx1hB8=' 'sha256-zFQSSAlKE48Ed8ub4ZYQt9CQC7WOqyVbfP0Sm9PjrPM=' 'sha256-hnB1mPTe3qhqn8ZONaSlZXEabr1KGoyeBhEWvBm7XEg='; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
     <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2218%22%20fill%3D%22%23214f40%22%2F%3E%3Cellipse%20cx%3D%2232%22%20cy%3D%2232%22%20rx%3D%2221%22%20ry%3D%2212%22%20fill%3D%22none%22%20stroke%3D%22%23e4edb0%22%20stroke-width%3D%223%22%20transform%3D%22rotate(-40%2032%2032)%22%2F%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%226%22%20fill%3D%22%23e4edb0%22%2F%3E%3C%2Fsvg%3E%0A" type="image/svg+xml">
     <style>/* ORBIT — foundations, workspace, canvas, panels, dialogs, responsive. */
 :root {
@@ -787,6 +787,10 @@ html:not([data-ai='enabled']) .toolbar-divider {
   background: transparent;
   border-color: transparent;
   font-size: 17px;
+}
+.goal-complete-btn,
+.mobile-panel-backdrop {
+  display: none;
 }
 .goal-menu-btn {
   right: 8px;
@@ -1661,6 +1665,205 @@ html:not([data-ai='enabled']) .toolbar-divider {
     top: 78px;
   }
 }
+/* Phones use a readable, scrollable tree instead of a clipped desktop canvas. */
+@media (max-width: 760px) {
+  #viewport {
+    overflow-y: auto;
+    overflow-x: hidden;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+    cursor: default;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+  #connections {
+    display: none;
+  }
+  #bubbleLayer {
+    position: relative;
+    width: auto;
+    height: auto;
+    margin: 0 16px;
+    zoom: 1 !important;
+    transform: none !important;
+    left: 0 !important;
+    top: 0 !important;
+  }
+  .goal-bubble {
+    position: relative;
+    left: auto !important;
+    top: auto !important;
+    width: auto !important;
+    margin: 0 0 12px var(--goal-indent, 0px);
+    padding: 16px 16px 62px;
+    min-height: 114px;
+    touch-action: pan-y;
+  }
+  .goal-bubble:not(.root-goal)::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: -13px;
+    height: 34px;
+    width: 7px;
+    border-left: 1px solid #b8c8b0;
+    border-bottom: 1px solid #b8c8b0;
+  }
+  .goal-text {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .goal-menu-btn,
+  .goal-add-btn {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    bottom: 6px;
+    font-size: 22px;
+  }
+  .goal-add-btn {
+    right: 54px;
+  }
+  .goal-complete-btn {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    left: 8px;
+    bottom: 6px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 18px;
+  }
+  .goal-complete-btn::before {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border: 1px solid #849a7b;
+    border-radius: 6px;
+  }
+  .goal-meta {
+    left: 58px;
+    bottom: 21px;
+    font-size: 11px;
+  }
+  .swap-btn {
+    display: none;
+  }
+  .canvas-heading {
+    position: relative;
+    left: auto;
+    top: auto;
+    margin: 76px 16px 20px;
+    max-width: none;
+  }
+  .canvas-heading h1 {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+  }
+  .canvas-heading p {
+    display: block;
+    font-size: 12px;
+  }
+  .panel-edge-toggle {
+    top: 14px;
+    left: 16px;
+    transform: none;
+    min-height: 44px;
+    width: 88px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    font-size: 20px;
+  }
+  .panel-edge-toggle::after {
+    content: 'Goals';
+    margin-left: 7px;
+    font-size: 14px;
+  }
+  .mobile-panel-backdrop:not([hidden]) {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 14;
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    background: #192b2354;
+  }
+  .mobile-panel-backdrop:hover:not(:disabled) {
+    background: #192b2354;
+  }
+  .todo-panel {
+    width: min(340px, calc(100vw - 52px));
+  }
+  .panel-close,
+  .icon-button,
+  .todo-check {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .todo-focus {
+    min-height: 44px;
+    font-size: 14px;
+  }
+  .canvas-bottom {
+    position: fixed;
+    left: auto;
+    right: 16px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    z-index: 10;
+  }
+  .history-controls {
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fffffff2;
+  }
+  .canvas-tools .icon-button {
+    width: 44px;
+  }
+  .zoom-hud {
+    display: none;
+  }
+  .welcome-panel {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    width: auto;
+    margin: clamp(24px, 12vh, 96px) 20px;
+  }
+  input,
+  textarea,
+  select,
+  .welcome-form input {
+    font-size: 16px;
+  }
+  .top-menu {
+    right: 12px;
+    min-width: 240px;
+    max-width: calc(100vw - 24px);
+  }
+  .top-menu button,
+  .bubble-menu button {
+    min-height: 48px;
+    font-size: 14px;
+  }
+  .modal-backdrop {
+    padding: 12px;
+  }
+  .modal {
+    padding: 22px;
+  }
+  .modal-actions button,
+  .welcome-form button {
+    min-height: 48px;
+    font-size: 15px;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1738,6 +1941,7 @@ html[data-mode="offline"] .human-request-resume {
         <button id="todoToggleBtn" class="panel-edge-toggle" type="button" aria-label="Show left panel" title="Show left panel" aria-controls="todoPanel" aria-expanded="false" hidden="">
           <span aria-hidden="true">→</span>
         </button>
+        <button id="mobilePanelBackdrop" class="mobile-panel-backdrop" type="button" aria-label="Close Goals panel" tabindex="-1" hidden=""></button>
         <aside id="todoPanel" class="todo-panel" aria-label="Focus list">
           <div id="todoContent" class="todo-content">
             <div class="sidebar-section-heading">
@@ -5822,6 +6026,7 @@ html[data-mode="offline"] .human-request-resume {
   let statusHideTimer = null;
   let modelRefreshSequence = 0;
   let hasRendered = false;
+  let previousMobileLayout = null;
   let cameraNeedsCentering = true;
   let humanInteractionEnabled = true;
   let humanInteractions = [];
@@ -5925,6 +6130,10 @@ html[data-mode="offline"] .human-request-resume {
     $('fitViewBtn').onclick = fitView;
     $('settingsShortcutBtn').onclick = openSettingsModal;
     $('workspaceSettingsMenuBtn').onclick = openWorkspaceSettings;
+    $('mobilePanelBackdrop').onclick = () => {
+      toggleTodoPanel(true);
+      todoToggleBtn.focus({ preventScroll: true });
+    };
     $('closeWorkspaceSettingsBtn').onclick = closeWorkspaceSettings;
     const toggleBanner = () => {
       closeMenus();
@@ -6145,6 +6354,15 @@ html[data-mode="offline"] .human-request-resume {
   }
 
   function render(pass = 0, anchor = null, focusId = null) {
+    const mobile = isMobileLayout();
+    const scrollTop = viewport.scrollTop;
+    if (previousMobileLayout !== null && mobile !== previousMobileLayout) {
+      cameraNeedsCentering = true;
+      viewport.scrollTop = 0;
+    }
+    if (mobile && previousMobileLayout === false) toggleTodoPanel(true);
+    previousMobileLayout = mobile;
+    syncMobilePanel();
     const focused = focusId || document.activeElement?.closest('.goal-bubble')?.dataset.id;
     closeMenus();
     goalIndex = new Map(goals.map((goal) => [goal.id, goal]));
@@ -6166,7 +6384,7 @@ html[data-mode="offline"] .human-request-resume {
     center(root);
     drawBubbles();
     // New/edited nodes can measure taller than the estimate; run one relayout pass to keep spacing and lines correct.
-    if (pass === 0) {
+    if (pass === 0 && !mobile) {
       const needsRelayout = goals.some(
         (g) => Math.abs((g.height || 0) - (g.layoutHeight || 0)) > 2
       );
@@ -6189,6 +6407,7 @@ html[data-mode="offline"] .human-request-resume {
     updateTodoList();
     updateHumanInbox();
     updateWorkspace();
+    if (mobile) viewport.scrollTop = scrollTop;
     if (focused && !newGoalMode)
       bubbles.querySelector(`[data-id="${focused}"]`)?.focus({ preventScroll: true });
     scheduleDraftSave();
@@ -6254,118 +6473,138 @@ html[data-mode="offline"] .human-request-resume {
 
   function drawBubbles() {
     const fragment = document.createDocumentFragment();
-    goals.forEach((goal) => {
-      const div = document.createElement('div');
-      div.className = 'goal-bubble';
-      div.classList.toggle('selected', goal.id === selectedGoalId);
-      div.classList.toggle('root-goal', goal.id === rootId);
-      if (aiEnabled && goal.aiSuggested) div.classList.add('ai-suggested');
-      if (aiEnabled && goal.aiPending) div.classList.add('ai-pending');
-      if (isVerifiedAction(goal)) div.classList.add('atomic-action');
-      if (aiEnabled && goal.nodeType === 'needsReview') div.classList.add('needs-review');
-      if (aiEnabled && goal.nodeType === 'planned') div.classList.add('planned');
-      if (goal.completed) div.classList.add('completed');
-      const executionCompletedByAi = goal.completed && goal.aiExecution?.status === 'completed';
-      const openHumanHandoff = !goal.completed && goal.aiExecution?.status === 'human_required';
-      if (aiEnabled && executionCompletedByAi) div.classList.add('ai-completed');
-      if (aiEnabled && openHumanHandoff) div.classList.add('human-required');
-      if (aiLoadingGoalIds.has(goal.id)) div.classList.add('ai-loading');
-      div.dataset.id = goal.id;
-      div.tabIndex = 0;
-      div.setAttribute('role', 'group');
-      div.setAttribute('aria-label', goalAriaLabel(goal));
-      if (
-        aiEnabled &&
-        !goal.completed &&
-        goal.aiExecution?.status === 'human_required' &&
-        goal.aiExecution.humanNote
-      ) {
-        div.title = `Human required: ${goal.aiExecution.humanNote}`;
-      } else if (goal.doneWhen) {
-        div.title = `Done when: ${goal.doneWhen}`;
-      }
-      div.style.left = goal.x + 'px';
-      div.style.top = goal.y + 'px';
-      div.style.width = (goal.layoutWidth || BUBBLE_WIDTH) + 'px';
-      div.setAttribute('aria-description', 'Click or press Enter to add a subgoal.');
-      const text = document.createElement('div');
-      text.className = 'goal-text';
-      text.textContent = goal.text || '(empty)';
-      div.appendChild(text);
-      if (aiEnabled && goal.aiExecution) {
-        const badge = document.createElement('button');
-        badge.type = 'button';
-        badge.onclick = (event) => {
-          event.stopPropagation();
-          openResultModal(goal.id);
-        };
-        let badgeClass = '';
-        let badgeText = 'AI result available';
-        if (openHumanHandoff) {
-          badgeClass = 'human-required';
-          badgeText = 'Human required';
-        } else if (goal.aiExecution.status === 'human_required' && goal.completed) {
-          badgeClass = 'completed';
-          badgeText = 'Completed by human';
-        } else if (executionCompletedByAi) {
-          badgeClass = 'ai-completed';
-          badgeText = goal.aiExecution.kind === 'decision' ? 'AI decision' : 'AI completed';
+    getGoalPreorderIds()
+      .map((id) => goalIndex.get(id))
+      .forEach((goal) => {
+        const div = document.createElement('div');
+        div.className = 'goal-bubble';
+        div.classList.toggle('selected', goal.id === selectedGoalId);
+        div.classList.toggle('root-goal', goal.id === rootId);
+        if (aiEnabled && goal.aiSuggested) div.classList.add('ai-suggested');
+        if (aiEnabled && goal.aiPending) div.classList.add('ai-pending');
+        if (isVerifiedAction(goal)) div.classList.add('atomic-action');
+        if (aiEnabled && goal.nodeType === 'needsReview') div.classList.add('needs-review');
+        if (aiEnabled && goal.nodeType === 'planned') div.classList.add('planned');
+        if (goal.completed) div.classList.add('completed');
+        const executionCompletedByAi = goal.completed && goal.aiExecution?.status === 'completed';
+        const openHumanHandoff = !goal.completed && goal.aiExecution?.status === 'human_required';
+        if (aiEnabled && executionCompletedByAi) div.classList.add('ai-completed');
+        if (aiEnabled && openHumanHandoff) div.classList.add('human-required');
+        if (aiLoadingGoalIds.has(goal.id)) div.classList.add('ai-loading');
+        div.dataset.id = goal.id;
+        div.style.setProperty(
+          '--goal-indent',
+          `${Math.min(3, getGoalLineage(goal.id).length - 1) * 14}px`
+        );
+        div.tabIndex = 0;
+        div.setAttribute('role', 'group');
+        div.setAttribute('aria-label', goalAriaLabel(goal));
+        if (
+          aiEnabled &&
+          !goal.completed &&
+          goal.aiExecution?.status === 'human_required' &&
+          goal.aiExecution.humanNote
+        ) {
+          div.title = `Human required: ${goal.aiExecution.humanNote}`;
+        } else if (goal.doneWhen) {
+          div.title = `Done when: ${goal.doneWhen}`;
         }
-        badge.className = `execution-badge${badgeClass ? ` ${badgeClass}` : ''}`;
-        badge.textContent = badgeText;
-        div.appendChild(badge);
-      }
-      if (aiEnabled && goal.aiPending) div.appendChild(mkPendingActions(goal.id));
+        div.style.left = goal.x + 'px';
+        div.style.top = goal.y + 'px';
+        div.style.width = (goal.layoutWidth || BUBBLE_WIDTH) + 'px';
+        div.setAttribute('aria-description', 'Click or press Enter to add a subgoal.');
+        const text = document.createElement('div');
+        text.className = 'goal-text';
+        text.textContent = goal.text || '(empty)';
+        div.appendChild(text);
+        if (aiEnabled && goal.aiExecution) {
+          const badge = document.createElement('button');
+          badge.type = 'button';
+          badge.onclick = (event) => {
+            event.stopPropagation();
+            openResultModal(goal.id);
+          };
+          let badgeClass = '';
+          let badgeText = 'AI result available';
+          if (openHumanHandoff) {
+            badgeClass = 'human-required';
+            badgeText = 'Human required';
+          } else if (goal.aiExecution.status === 'human_required' && goal.completed) {
+            badgeClass = 'completed';
+            badgeText = 'Completed by human';
+          } else if (executionCompletedByAi) {
+            badgeClass = 'ai-completed';
+            badgeText = goal.aiExecution.kind === 'decision' ? 'AI decision' : 'AI completed';
+          }
+          badge.className = `execution-badge${badgeClass ? ` ${badgeClass}` : ''}`;
+          badge.textContent = badgeText;
+          div.appendChild(badge);
+        }
+        if (aiEnabled && goal.aiPending) div.appendChild(mkPendingActions(goal.id));
 
-      const menuBtn = document.createElement('button');
-      menuBtn.className = 'goal-menu-btn';
-      menuBtn.textContent = '…';
-      menuBtn.type = 'button';
-      menuBtn.title = `Actions for ${goal.text || 'goal'}`;
-      menuBtn.dataset.goalId = goal.id;
-      menuBtn.setAttribute('aria-label', `Open actions for ${goal.text || 'goal'}`);
-      menuBtn.setAttribute('aria-haspopup', 'menu');
-      menuBtn.setAttribute('aria-expanded', 'false');
-      menuBtn.onclick = (e) => {
-        e.stopPropagation();
-        toggleMenu(goal.id);
-      };
-      div.appendChild(menuBtn);
+        const menuBtn = document.createElement('button');
+        menuBtn.className = 'goal-menu-btn';
+        menuBtn.textContent = '…';
+        menuBtn.type = 'button';
+        menuBtn.title = `Actions for ${goal.text || 'goal'}`;
+        menuBtn.dataset.goalId = goal.id;
+        menuBtn.setAttribute('aria-label', `Open actions for ${goal.text || 'goal'}`);
+        menuBtn.setAttribute('aria-haspopup', 'menu');
+        menuBtn.setAttribute('aria-expanded', 'false');
+        menuBtn.onclick = (e) => {
+          e.stopPropagation();
+          toggleMenu(goal.id);
+        };
+        div.appendChild(menuBtn);
 
-      const add = document.createElement('button');
-      add.type = 'button';
-      add.className = 'goal-add-btn';
-      add.textContent = '+';
-      add.setAttribute('aria-label', `Add subgoal to ${goal.text}`);
-      add.onclick = (event) => {
-        event.stopPropagation();
-        openInputForNewChild(goal.id);
-      };
-      div.appendChild(add);
-      const meta = document.createElement('span');
-      meta.className = 'goal-meta';
-      meta.textContent = goal.completed
-        ? 'Completed'
-        : aiEnabled && goal.aiPending
-          ? 'Review suggestion'
-          : aiEnabled && goal.nodeType === 'needsReview'
-            ? 'Needs review'
-            : goal.children.length
-              ? `${goal.children.length} subgoal${goal.children.length === 1 ? '' : 's'}`
-              : goal.estimatedMinutes
-                ? `${goal.estimatedMinutes} min`
-                : '';
-      if (meta.textContent) div.appendChild(meta);
+        const add = document.createElement('button');
+        add.type = 'button';
+        add.className = 'goal-add-btn';
+        add.textContent = '+';
+        add.setAttribute('aria-label', `Add subgoal to ${goal.text}`);
+        add.onclick = (event) => {
+          event.stopPropagation();
+          openInputForNewChild(goal.id);
+        };
+        div.appendChild(add);
+        const complete = document.createElement('button');
+        complete.type = 'button';
+        complete.className = 'goal-complete-btn';
+        complete.textContent = goal.completed ? '✓' : '';
+        complete.setAttribute(
+          'aria-label',
+          `${goal.completed ? 'Mark incomplete' : 'Complete'}: ${goal.text}`
+        );
+        complete.setAttribute('aria-pressed', String(goal.completed));
+        complete.onclick = (event) => {
+          event.stopPropagation();
+          toggleGoalCompleted(goal.id);
+        };
+        div.appendChild(complete);
+        const meta = document.createElement('span');
+        meta.className = 'goal-meta';
+        meta.textContent = goal.completed
+          ? 'Completed'
+          : aiEnabled && goal.aiPending
+            ? 'Review suggestion'
+            : aiEnabled && goal.nodeType === 'needsReview'
+              ? 'Needs review'
+              : goal.children.length
+                ? `${goal.children.length} subgoal${goal.children.length === 1 ? '' : 's'}`
+                : goal.estimatedMinutes
+                  ? `${goal.estimatedMinutes} min`
+                  : '';
+        if (meta.textContent) div.appendChild(meta);
 
-      const parent = goalIndex.get(goal.parentId);
-      if (parent) {
-        const idx = parent.children.indexOf(goal.id);
-        div.appendChild(mkSwapBtn(goal.id, -1, idx <= 0));
-        div.appendChild(mkSwapBtn(goal.id, 1, idx >= parent.children.length - 1));
-      }
+        const parent = goalIndex.get(goal.parentId);
+        if (parent) {
+          const idx = parent.children.indexOf(goal.id);
+          div.appendChild(mkSwapBtn(goal.id, -1, idx <= 0));
+          div.appendChild(mkSwapBtn(goal.id, 1, idx >= parent.children.length - 1));
+        }
 
-      fragment.appendChild(div);
-    });
+        fragment.appendChild(div);
+      });
     bubbles.appendChild(fragment);
     for (const div of bubbles.children) {
       const goal = goalIndex.get(div.dataset.id);
@@ -6410,6 +6649,16 @@ html[data-mode="offline"] .human-request-resume {
       ),
       mkMenuBtn('Delete', () => confirmDeleteGoal(goal.id))
     );
+    if (isMobileLayout() && goal.parentId) {
+      const siblings = goalIndex.get(goal.parentId)?.children || [];
+      const index = siblings.indexOf(goal.id);
+      menu.append(
+        mkMenuBtn('Move earlier', () => swapWithNeighbor(goal.id, -1), { disabled: index <= 0 }),
+        mkMenuBtn('Move later', () => swapWithNeighbor(goal.id, 1), {
+          disabled: index >= siblings.length - 1
+        })
+      );
+    }
     if (aiEnabled)
       menu.append(
         mkMenuSeparator(),
@@ -6584,6 +6833,7 @@ html[data-mode="offline"] .human-request-resume {
   }
 
   function onViewportWheel(e) {
+    if (isMobileLayout()) return;
     if (e.target.closest('button, input, textarea, .welcome-panel, .bubble-menu, .canvas-tools'))
       return;
     e.preventDefault();
@@ -6599,6 +6849,7 @@ html[data-mode="offline"] .human-request-resume {
   }
 
   function onViewportMouseDown(e) {
+    if (isMobileLayout()) return;
     if (!e.isPrimary || e.button !== 0) return;
     if (e.target.closest('button, input, textarea, .welcome-panel, .canvas-tools')) return;
     if (
@@ -7180,7 +7431,18 @@ html[data-mode="offline"] .human-request-resume {
     todoToggleBtn.hidden = !nextCollapsed;
     todoToggleBtn.setAttribute('aria-expanded', String(!nextCollapsed));
     $('collapseTodoBtn').setAttribute('aria-expanded', String(!nextCollapsed));
+    syncMobilePanel();
     if (!nextCollapsed && window.matchMedia('(max-width: 760px)').matches) toggleHumanInbox(true);
+  }
+
+  function isMobileLayout() {
+    return window.matchMedia('(max-width: 760px)').matches;
+  }
+
+  function syncMobilePanel() {
+    const open = isMobileLayout() && !todoPanel.classList.contains('collapsed');
+    $('mobilePanelBackdrop').hidden = !open;
+    viewport.inert = open;
   }
 
   function updateTodoList() {
@@ -7729,6 +7991,10 @@ html[data-mode="offline"] .human-request-resume {
     }
     closeMenus();
     closeTopMenu();
+    if (isMobileLayout() && !todoPanel.classList.contains('collapsed')) {
+      toggleTodoPanel(true);
+      todoToggleBtn.focus({ preventScroll: true });
+    }
   }
 
   function onTopMenuKeyDown(e) {
@@ -10298,6 +10564,15 @@ html[data-mode="offline"] .human-request-resume {
     if (cameraFrame !== null) return;
     cameraFrame = requestAnimationFrame(() => {
       cameraFrame = null;
+      if (isMobileLayout()) {
+        for (const layer of [bubbles, svg]) {
+          layer.style.zoom = '1';
+          layer.style.left = '0px';
+          layer.style.top = '0px';
+          layer.style.transform = 'none';
+        }
+        return;
+      }
       // Native zoom repaints text, borders and SVG at their displayed size instead
       // of magnifying a cached transform layer. Keep layout in world coordinates;
       // absolute offsets are scaled by zoom too, so divide the screen-space pan.
@@ -10409,6 +10684,10 @@ html[data-mode="offline"] .human-request-resume {
     if (window.matchMedia('(max-width: 760px)').matches) {
       toggleTodoPanel(true);
       toggleHumanInbox(true);
+      const card = bubbles.querySelector(`[data-id="${id}"]`);
+      card?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+      card?.focus({ preventScroll: true });
+      return;
     }
     camera.zoom = Math.max(camera.zoom, 0.7);
     camera.panX = viewport.clientWidth / 2 - (goal.x + BUBBLE_WIDTH / 2) * camera.zoom;
@@ -10424,6 +10703,10 @@ html[data-mode="offline"] .human-request-resume {
 
   function fitView() {
     if (isPristine() || !goals.length) return;
+    if (isMobileLayout()) {
+      viewport.scrollTop = 0;
+      return;
+    }
     closeMenus();
     const minX = Math.min(...goals.map((goal) => goal.x));
     const minY = Math.min(...goals.map((goal) => goal.y));
