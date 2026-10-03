@@ -2,10 +2,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Subgoals</title>
-    <meta name="description" content="A free offline visual goal planner. No account, installation, server, or internet required.">
+    <meta name="description" content="A free visual goal planner. No account required. Your goals stay in your browser.">
     <meta name="theme-color" content="#f7f8f5">
-    <meta name="referrer" content="no-referrer">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-sAuYXzMr2jo5b21McyqI3N0+r1iW0ay8SDoCzzC3K5E=' 'sha256-aTUitgHM3964V6JBXz44PwAEEzxglBBZxBoyDt8XiK4=' 'sha256-mzbWbhd7aYxMhSZKyOzvj+Xu0iO53iA67QaY3Sx1hB8=' 'sha256-zFQSSAlKE48Ed8ub4ZYQt9CQC7WOqyVbfP0Sm9PjrPM=' 'sha256-hnB1mPTe3qhqn8ZONaSlZXEabr1KGoyeBhEWvBm7XEg='; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <meta name="referrer" content="same-origin">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-sAuYXzMr2jo5b21McyqI3N0+r1iW0ay8SDoCzzC3K5E=' 'sha256-aTUitgHM3964V6JBXz44PwAEEzxglBBZxBoyDt8XiK4=' 'sha256-mzbWbhd7aYxMhSZKyOzvj+Xu0iO53iA67QaY3Sx1hB8=' 'sha256-zFQSSAlKE48Ed8ub4ZYQt9CQC7WOqyVbfP0Sm9PjrPM=' 'sha256-hnB1mPTe3qhqn8ZONaSlZXEabr1KGoyeBhEWvBm7XEg=' https://static.cloudflareinsights.com; style-src 'unsafe-inline'; img-src data:; connect-src https://subgoals.app/cdn-cgi/rum; object-src 'none'; base-uri 'none'; form-action 'none'">
     <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2218%22%20fill%3D%22%23214f40%22%2F%3E%3Cellipse%20cx%3D%2232%22%20cy%3D%2232%22%20rx%3D%2221%22%20ry%3D%2212%22%20fill%3D%22none%22%20stroke%3D%22%23e4edb0%22%20stroke-width%3D%223%22%20transform%3D%22rotate(-40%2032%2032)%22%2F%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%226%22%20fill%3D%22%23e4edb0%22%2F%3E%3C%2Fsvg%3E%0A" type="image/svg+xml">
     <style>/* ORBIT — foundations, workspace, canvas, panels, dialogs, responsive. */
 :root {
@@ -2114,7 +2114,14 @@ html[data-mode="offline"] .human-request-resume {
             <input id="showMenuBarInput" type="checkbox" role="switch" aria-describedby="menuBarPreferenceHint" checked="">
           </label>
         </section>
-        <p id="workspacePreferencesStatus" class="workspace-preferences-status" role="status"></p>
+        <section class="workspace-settings-card" aria-labelledby="privacyTitle"><h2 id="privacyTitle">Privacy</h2>
+      <p>Your goals and uploaded files stay in your browser. Downloads are saved to your device.</p>
+      <p>This website uses Cloudflare Web Analytics to measure visits, page views, device types,
+      referral sources, and loading performance. Analytics does not collect your goal text or
+      uploaded files and does not use cookies, persistent visitor IDs, or fingerprinting.</p>
+      <p>Analytics is excluded for visitors served through Cloudflare's European exclusion region.
+      Downloaded offline copies do not report analytics.</p>
+      <p><a href="https://developers.cloudflare.com/speed/observatory/rum-beacon/" target="_blank" rel="noopener noreferrer">Cloudflare analytics privacy details</a></p></section><p id="workspacePreferencesStatus" class="workspace-preferences-status" role="status"></p>
       </div>
     </div>
 
